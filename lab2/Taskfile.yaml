@@ -1,0 +1,63 @@
+version: '3'
+
+vars:
+  GREETING: Hello, World!
+  HYPERFINE_COMMON: --style full --warmup 0
+  HYPERFINE_SIZE_ARGS: --parameter-list size 1000000,10000000,100000000,1000000000
+
+tasks:
+  default: 
+    cmds: [ task -a ]
+    silent: true
+  
+  generate-data: py ../generate_output.py -s 1000000 -l -100.0 -u 100.0
+  
+  build-cu:
+    deps: [ cleanup ]
+    cmds:
+      - nvcc -o vectorAdd-cu.exe vectorAdd.cu
+  
+  build-cpp:
+    deps: [ cleanup ]
+    cmds: 
+      - cl /Od /FevectorAdd-cpp.exe vectorAdd.cpp
+  
+  build-cu-static:
+    deps: [ cleanup ]
+    cmds:
+      - nvcc -o vectorAdd-cu-static.exe vectorAdd-static.cu
+  
+  build-cpp-static:
+    deps: [ cleanup ]
+    cmds: 
+      - cl /Od /FevectorAdd-cpp-static.exe vectorAdd-static.cpp
+  
+  run-statics:
+    deps: [ build-cu-static, build-cpp-static ]
+    cmds:
+      - ./vectorAdd-cu-static.exe
+      - ./vectorAdd-cpp-static.exe
+  
+  run:
+    deps: [ build-cu, build-cpp ]
+    cmds:
+      - ./vectorAdd-cu.exe
+      - ./vectorAdd-cpp.exe
+
+  bench-static:
+    deps: [ build-cu-static, build-cpp-static ]
+    cmds:
+      - hyperfine {{.HYPERFINE_COMMON}} --runs 5 --export-json "bench-static.json" 'vectorAdd-cu-static.exe' 'vectorAdd-cpp-static.exe'
+
+  bench:
+    deps: [ build-cu, build-cpp ]
+    cmds:
+      - hyperfine {{.HYPERFINE_COMMON}} --runs 5 --export-json "bench.json" {{.HYPERFINE_SIZE_ARGS}} 'vectorAdd-cpp.exe {size}' 'vectorAdd-cu.exe {size}'
+  
+  cleanup:
+    run: once
+    cmds:
+      - powershell -c "Remove-Item ./* -include '*.exe', '*.exp', '*.lib'"
+
+  build-all:
+    deps: [ build-cu, build-cpp, build-cu-static, build-cpp-static ]
