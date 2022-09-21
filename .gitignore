@@ -1,2 +1,6 @@
 data.txt
 temp
+*.exe
+*.exp
+*.lib
+*.obj
