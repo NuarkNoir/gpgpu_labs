@@ -16,9 +16,19 @@ int main() {
         data >> a[i] >> b[i] >> sumE[i];
     }
     
-    auto sumR = sumVecs(a, b, size);
+    float* sumR;
+    double cpuMills=0;
+    {
+        clock_t cpuStart, cpuEnd;
+        cpuStart = clock();
+        sumR = sumVecs(a, b, size);
+        cpuEnd = clock();
+        cpuMills = ((cpuEnd - cpuStart)/CLOCKS_PER_SEC);
+    }
 
     bool veq = compareVecs(sumE, sumR, size);
+
+    std::cout << "CPU time: " << cpuMills << "ms" << std::endl;
     
     if (veq) {
         std::cout << "Success!" << std::endl;

@@ -2,7 +2,7 @@ version: '3'
 
 vars:
   GREETING: Hello, World!
-  HYPERFINE_COMMON: --style full --warmup 0
+  HYPERFINE_COMMON: --warmup 0 --show-output
   HYPERFINE_SIZE_ARGS: --parameter-list size 1000000,10000000,100000000,1000000000
 
 tasks:

@@ -13,9 +13,20 @@ int main(int argc, char** argv) {
     
     volatile auto a = generateVec(size, -100, 100);
     volatile auto b = generateVec(size, -100, 100);
-    volatile auto sumE = sumVecs(a, b, size);
+    
+    float* sumE;
+    double cpuMills=0;
+    {
+        clock_t cpuStart, cpuEnd;
+        cpuStart = clock();
+        sumE = sumVecs(a, b, size);
+        cpuEnd = clock();
+        cpuMills = ((cpuEnd - cpuStart));
+    }
 
     (void)sumE;
+
+    std::cout << "CPU time: " << cpuMills << "us" << std::endl;
 
     return 0;
 }

@@ -35,15 +35,28 @@ int main() {
     cudaMemcpy(dA, hA, sizeInBytes, cudaMemcpyHostToDevice);
     cudaMemcpy(dB, hB, sizeInBytes, cudaMemcpyHostToDevice);
 
-    vectorAdd<<<BLOCKS, THREADS_PER_BLOCK>>>(dA, dB, dSum, size);
+    float cudaMills = 0;
+    {
+        cudaEvent_t start, stop;
+        cudaEventCreate(&start);
+        cudaEventCreate(&stop);
+        cudaEventRecord(start);
+        vectorAdd<<<BLOCKS, THREADS_PER_BLOCK>>>(dA, dB, dSum, size);
+        cudaEventRecord(stop);
 
-    cudaMemcpy(hdSum, dSum, sizeInBytes, cudaMemcpyDeviceToHost);
+
+        cudaMemcpy(hdSum, dSum, sizeInBytes, cudaMemcpyDeviceToHost);
+        cudaEventSynchronize(stop);
+        cudaEventElapsedTime(&cudaMills, start, stop);
+    }
 
     bool veq = compareVecs(hSumE, hdSum, size);
 
     cudaFree(dA);
     cudaFree(dB);
     cudaFree(dSum);
+
+    std::cout << "CUDA time: " << cudaMills << "ms" << std::endl;
 
     if (veq) {
         std::cout << "Success!" << std::endl;
