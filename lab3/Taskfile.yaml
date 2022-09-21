@@ -1,0 +1,30 @@
+version: '3'
+
+vars:
+  GREETING: Hello, World!
+  HYPERFINE_COMMON: --style full --warmup 0
+
+tasks:
+  default: 
+    cmds: [ task -a ]
+    silent: true
+  
+  build:
+    deps: [ cleanup ]
+    cmds:
+      - nvcc -o matAdd.exe matAdd.cu
+  
+  run:
+    deps: [ build ]
+    cmds:
+      - ./matAdd.exe
+
+  bench:
+    deps: [ build-cu, build-cpp ]
+    cmds:
+      - hyperfine {{.HYPERFINE_COMMON}} --runs 5 --export-json "bench.json" 'matAdd.exe'
+  
+  cleanup:
+    run: once
+    cmds:
+      - powershell -c "Remove-Item ./* -include '*.exe', '*.exp', '*.lib'"
