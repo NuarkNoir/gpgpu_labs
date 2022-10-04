@@ -5,7 +5,7 @@
 #include <cuda_runtime.h>
 #include "../commonUtils.cpp"
 
-constexpr int N = 256;
+constexpr int N = 1024;
 constexpr int SIZE = N*N;
 constexpr int BLOCK_SIZE = 16;
 
@@ -22,15 +22,15 @@ __global__ void matMul(const float *a, const float *b, float *c, int N) {
 __global__ void matMulShared(float* a, float* b, float* c, size_t N) {
 	float sum = 0.0;
 
-	unsigned __int16 aBegin = N * BLOCK_SIZE * blockIdx.y;
-	unsigned __int16 aEnd = aBegin + N - 1;
+	int aBegin = N * BLOCK_SIZE * blockIdx.y;
+	int aEnd = aBegin + N - 1;
   
-	unsigned __int16 aStep = BLOCK_SIZE;
+	int aStep = BLOCK_SIZE;
 
-	unsigned __int16 bBegin = BLOCK_SIZE * blockIdx.x;
-	unsigned __int16 bStep = BLOCK_SIZE * N;
+	int bBegin = BLOCK_SIZE * blockIdx.x;
+	int bStep = BLOCK_SIZE * N;
 
-	for (unsigned __int16 ia = aBegin, ib = bBegin; ia <= aEnd; ia += aStep, ib += bStep) {
+	for (int ia = aBegin, ib = bBegin; ia <= aEnd; ia += aStep, ib += bStep) {
 		__shared__ float As[BLOCK_SIZE][BLOCK_SIZE];
 		__shared__ float Bs[BLOCK_SIZE][BLOCK_SIZE];
 
@@ -39,7 +39,7 @@ __global__ void matMulShared(float* a, float* b, float* c, size_t N) {
 
 		__syncthreads();
 
-		for (unsigned __int16 k = 0; k < BLOCK_SIZE; k++)
+		for (int k = 0; k < BLOCK_SIZE; k++)
 		{
 			sum += As[threadIdx.y][k] * Bs[k][threadIdx.x];
 		}
