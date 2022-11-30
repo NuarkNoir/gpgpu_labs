@@ -3,9 +3,8 @@
 #include <string>
 #include <cuda.h>
 #include <cuda_runtime.h>
-#include "../commonUtils.cpp"
 
-constexpr int N = 1024;
+constexpr int N = 16384;
 constexpr int SIZE = N*N;
 constexpr int BLOCK_SIZE = 16;
 
@@ -51,20 +50,6 @@ __global__ void matMulShared(float* a, float* b, float* c, size_t N) {
 	c[ic + N * threadIdx.y + threadIdx.x] = sum;
 }
 
-__host__ void matMulCPU(const float *a, const float *b, float *c, int N) {
-    for (int i = 0; i < N; ++i)
-    {
-        for (int j = 0; j < N; ++j)
-        {
-            c[i * N + j] = 0;
-            for (int h = 0; h < N; ++h)
-            {
-                c[i * N + j] += a[i * N + h] * b[h * N + j];
-            }
-        }
-    }
-}
-
 void printDeviceInfo();
 std::string formatBytes(size_t bytes);
 void printMatrix(float *matrix, int N);
@@ -75,22 +60,12 @@ int main() {
 
   float *h_A = new float[SIZE];
   float *h_B = new float[SIZE];
-  float *h_C = new float[SIZE];
   float *hd_C = new float[SIZE];
   float *hds_C = new float[SIZE];
 
   for (int i = 0; i < SIZE; i++) {
     h_A[i] = (rand() % 1000) / 1000.0f;
     h_B[i] = (rand() % 1000) / 1000.0f;
-  }
-
-  double cpuMills=0;
-  {
-    clock_t cpuStart, cpuEnd;
-    cpuStart = clock();
-    matMulCPU(h_A, h_B, h_C, N);
-    cpuEnd = clock();
-    cpuMills = ((cpuEnd - cpuStart)/CLOCKS_PER_SEC);
   }
 
   float *d_A, *d_B, *ds_C, *d_C;
@@ -140,10 +115,9 @@ int main() {
   cudaFree(d_B);
   cudaFree(d_C);
 
-  std::cout << "Matrix equals: hk " << matrixEquals(h_C, hd_C, N) << "; hks " << matrixEquals(h_C, hds_C, N) << std::endl;
+  std::cout << "Matrix equals: " << matrixEquals(hd_C, hds_C, N) << std::endl;
   std::cout << "Kernel execution time: " << cudaMills << " ms" << std::endl;
   std::cout << "Kernel shared mem execution time: " << cudaMillsShared << " ms" << std::endl;
-  std::cout << "CPU execution time: " << cpuMills << " ms" << std::endl;
 
   return 0;
 }
